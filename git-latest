@@ -1,0 +1,57 @@
+#!/bin/bash
+
+FORMAT=0
+LIMIT=
+MERGE=0
+
+while getopts "f:l:m" OPTION; do
+    case $OPTION in
+        f)
+            FORMAT=$OPTARG
+            ;;
+        l)
+            LIMIT=$OPTARG
+            ;;
+        m)
+            MERGE=1
+            ;;
+    esac
+done
+
+function show_rev() {
+    PRETTY="%C(yellow)%h%Cred%d %Cblue%s%Creset %cr%n"
+    PAGER="--no-pager"
+    SPACE=0
+    case $FORMAT in
+        d)
+            PRETTY=$PRETTY+" %n%s%n%n%b"
+            SPACE=1
+            ;;
+        p)
+            PRETTY=$PRETTY+" %n%s%n%n%b"
+            PAGER=
+            SPACE=1
+            ;;
+    esac
+
+    MERGES="--no-merges"
+    if [ $MERGE ]; then
+        MERGES=
+    fi
+
+    git $PAGER log $1 --pretty=format:"$PRETTY" --decorate --abbrev-commit --date=relative $MERGES --author='Beau Lyddon' -1
+    if [ $SPACE == 1 ]; then
+        echo
+    fi
+}
+
+COUNT=
+if [ $LIMIT ]; then
+    COUNT="--count=$LIMIT"
+fi
+
+revs=`git for-each-ref $COUNT --sort=-committerdate refs/heads/ --format='%(objectname)'`
+
+for rev in $revs; do
+    show_rev $rev
+done

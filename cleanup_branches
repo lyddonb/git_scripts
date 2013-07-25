@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# checkout master
+git checkout master
+git fetch origin
+
+echo "Pruning origin"
+git remote prune origin
+
+echo "The followin local branches are fully mreged and will be removed: "
+git branch --merged master | grep -v 'master$'
+
+read -p "Delete all local merged branches? "
+if [ "$REPLY" == "y" ]
+then
+    # remove local branches
+    git branch --merged master | grep -v 'master$' | xargs git branch -d
+    echo "Local Branches Removed"
+fi
+
+# Show remote fully merged branches
+echo "The following remote branches are fully merged and will be removed: "
+git branch -r --merged master | grep 'origin' | sed 's/ *origin\///' | grep -v 'master$'
+
+read -p "Delete all remote merged branches on origin? "
+if [ "$REPLY" == "y" ]
+then
+    # remove remote branches
+    git branch -r --merged master | grep 'origin' | sed 's/ *origin\///' | grep -v 'master$' | xargs -I% git push origin :%
+    echo "Remote Branches Removed"
+fi
